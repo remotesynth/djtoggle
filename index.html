@@ -1,122 +1,90 @@
 <html>
   <head> </head>
   <body>
-    <button id="play" disabled>Start</button>
-    <button id="playDrums" disabled>Drums</button>
-    <button id="playHighhat" disabled>High hat</button>
-    <script src="/path/to/howler.js"></script>
+    <button id="kick" disabled>Kick</button>
+    <button id="snare" disabled>Snare</button>
+    <button id="HHclosed" disabled>High hat (closed)</button>
+    <button id="HHopen" disabled>High hat (open)</button>
+    <button id="clap" disabled>Clap</button>
+    <button id="rimshot" disabled>Rimshot</button>
+    <button id="tom" disabled>Tom</button>
+    <button id="cymbal" disabled>Cymbal</button>
+    <script src="howler.core.min.js"></script>
     <script>
       (async function () {
-        "use strict";
+        const sound = new Howl({
+          src: ["drums.webm", "drums.mp3"],
+          sprite: {
+            clap: [0, 3809.523809523809, true],
+            cymbal: [5000, 3809.52380952381, true],
+            HHclosed: [10000, 3809.52380952381, true],
+            HHopen: [15000, 3809.52380952381, true],
+            kick: [20000, 3809.52380952381, true],
+            rimshot: [25000, 3809.52380952381, true],
+            snare: [30000, 3809.52380952381, true],
+            tom: [35000, 3809.52380952381, true],
+          },
+          mute: true,
+        });
 
-        let tracks = [
-          {
-            url: "Kick.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "Snare.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "HHClosed.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "HHOpen.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "Clap.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "Rimshot.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "Tom.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-          {
-            url: "Cymbal.wav",
-            context: null,
-            gain: null,
-            audioBuffer: null,
-            source: null,
-          },
-        ];
+        let trackMutes = [];
+        const clap = sound.play("clap");
+        trackMutes[clap] = true;
+        const cymbal = sound.play("cymbal");
+        trackMutes[cymbal] = true;
+        const HHclosed = sound.play("HHclosed");
+        trackMutes[HHclosed] = true;
+        const HHopen = sound.play("HHopen");
+        trackMutes[HHopen] = true;
+        const kick = sound.play("kick");
+        trackMutes[kick] = true;
+        const rimshot = sound.play("rimshot");
+        trackMutes[rimshot] = true;
+        const snare = sound.play("snare");
+        trackMutes[snare] = true;
+        const tom = sound.play("tom");
+        trackMutes[tom] = true;
 
-        function createContext() {
-          const context = new AudioContext();
-          return context;
+        function toggleMute(id) {
+          trackMutes[id] = !trackMutes[id];
+          sound.mute(trackMutes[id], id);
         }
 
-        function createGain(context) {
-          const gainNode = context.createGain();
-          gainNode.gain.value = 1;
-          return gainNode;
+        function playClap() {
+          sound.mute(false);
         }
 
-        async function loadAudioFile(URL, context) {
-          const response = await fetch(URL);
-          const arrayBuffer = await response.arrayBuffer();
-          const audioBuffer = await context.decodeAudioData(arrayBuffer);
+        const playKickBtn = document.querySelector("#kick");
+        playKickBtn.addEventListener("click", () => toggleMute(kick));
+        playKickBtn.disabled = false;
 
-          return audioBuffer;
-        }
+        const playSnareBtn = document.querySelector("#snare");
+        playSnareBtn.addEventListener("click", () => toggleMute(snare));
+        playSnareBtn.disabled = false;
 
-        // load all the tracks in
-        for (let i = 0; i < tracks.length; i++) {
-          const track = tracks[i];
-          track.context = createContext();
-          track.gain = createGain(track.context);
-          track.audioBuffer = await loadAudioFile(track.url, track.context);
+        const playHHclosedBtn = document.querySelector("#HHclosed");
+        playHHclosedBtn.addEventListener("click", () => toggleMute(HHclosed));
+        playHHclosedBtn.disabled = false;
 
-          track.source = track.context.createBufferSource();
-          track.source.buffer = track.audioBuffer;
-          track.source.connect(track.gain).connect(track.context.destination);
-          track.source.loop = true;
-        }
+        const playHHopenBtn = document.querySelector("#HHopen");
+        playHHopenBtn.addEventListener("click", () => toggleMute(HHopen));
+        playHHopenBtn.disabled = false;
 
-        function startTracks() {
-          // now that everything has been loaded, start playing
-          const current_time = tracks[tracks.length - 1].context.currentTime;
-          let adjustment = tracks.length;
-          for (let i = 0; i < tracks.length; i++) {
-            adjustment -= 1;
-            console.log(adjustment);
-            const track = tracks[i];
-            track.source.start(current_time + adjustment / 1000);
-          }
-        }
+        const playRimshotBtn = document.querySelector("#rimshot");
+        playRimshotBtn.addEventListener("click", () => toggleMute(rimshot));
+        playRimshotBtn.disabled = false;
 
-        const playButton = document.querySelector("#play");
-        playButton.disabled = false;
-        playButton.addEventListener("click", () => startTracks());
-        const playDrumButton = document.querySelector("#playDrums");
-        const playHHButton = document.querySelector("#playHighhat");
+        const playClapBtn = document.querySelector("#clap");
+        playClapBtn.addEventListener("click", () => toggleMute(clap));
+        playClapBtn.disabled = false;
+
+        const playTomBtn = document.querySelector("#tom");
+        playTomBtn.addEventListener("click", () => toggleMute(tom));
+        playTomBtn.disabled = false;
+
+        const playCymbalBtn = document.querySelector("#cymbal");
+        playCymbalBtn.addEventListener("click", () => toggleMute(cymbal));
+        playCymbalBtn.disabled = false;
       })();
     </script>
   </body>

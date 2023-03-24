@@ -1,0 +1,123 @@
+<html>
+  <head> </head>
+  <body>
+    <button id="play" disabled>Start</button>
+    <button id="playDrums" disabled>Drums</button>
+    <button id="playHighhat" disabled>High hat</button>
+    <script src="/path/to/howler.js"></script>
+    <script>
+      (async function () {
+        "use strict";
+
+        let tracks = [
+          {
+            url: "Kick.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "Snare.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "HHClosed.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "HHOpen.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "Clap.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "Rimshot.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "Tom.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+          {
+            url: "Cymbal.wav",
+            context: null,
+            gain: null,
+            audioBuffer: null,
+            source: null,
+          },
+        ];
+
+        function createContext() {
+          const context = new AudioContext();
+          return context;
+        }
+
+        function createGain(context) {
+          const gainNode = context.createGain();
+          gainNode.gain.value = 1;
+          return gainNode;
+        }
+
+        async function loadAudioFile(URL, context) {
+          const response = await fetch(URL);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await context.decodeAudioData(arrayBuffer);
+
+          return audioBuffer;
+        }
+
+        // load all the tracks in
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i];
+          track.context = createContext();
+          track.gain = createGain(track.context);
+          track.audioBuffer = await loadAudioFile(track.url, track.context);
+
+          track.source = track.context.createBufferSource();
+          track.source.buffer = track.audioBuffer;
+          track.source.connect(track.gain).connect(track.context.destination);
+          track.source.loop = true;
+        }
+
+        function startTracks() {
+          // now that everything has been loaded, start playing
+          const current_time = tracks[tracks.length - 1].context.currentTime;
+          let adjustment = tracks.length;
+          for (let i = 0; i < tracks.length; i++) {
+            adjustment -= 1;
+            console.log(adjustment);
+            const track = tracks[i];
+            track.source.start(current_time + adjustment / 1000);
+          }
+        }
+
+        const playButton = document.querySelector("#play");
+        playButton.disabled = false;
+        playButton.addEventListener("click", () => startTracks());
+        const playDrumButton = document.querySelector("#playDrums");
+        const playHHButton = document.querySelector("#playHighhat");
+      })();
+    </script>
+  </body>
+</html>

@@ -1,35 +1,66 @@
 <html>
-  <head> </head>
+  <head>
+    <title>DJ Toggle</title>
+    <style>
+      #main video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
   <body>
-    <button id="kick" disabled>Kick</button>
-    <button id="snare" disabled>Snare</button>
-    <button id="HHclosed" disabled>High hat (closed)</button>
-    <button id="HHopen" disabled>High hat (open)</button>
-    <button id="clap" disabled>Clap</button>
-    <button id="rimshot" disabled>Rimshot</button>
-    <button id="tom" disabled>Tom</button>
-    <button id="cymbal" disabled>Cymbal</button>
+    <div id="main">
+      <video src="video/djtoggle.mp4" muted loop></video>
+      <div class="overlay">
+        <button id="kick" disabled>Kick</button>
+        <button id="snare" disabled>Snare</button>
+        <button id="HHclosed" disabled>High hat (closed)</button>
+        <button id="HHopen" disabled>High hat (open)</button>
+        <button id="clap" disabled>Clap</button>
+        <button id="rimshot" disabled>Rimshot</button>
+        <button id="tom" disabled>Tom</button>
+        <button id="cymbal" disabled>Cymbal</button>
+        <button id="cowbell" disabled>Cowbell</button>
+      </div>
+    </div>
+    <script src="ldclient.min.js"></script>
     <script src="howler.core.min.js"></script>
     <script>
-      (async function () {
+      (function () {
         const sound = new Howl({
           src: ["drums.webm", "drums.mp3"],
           sprite: {
-            clap: [0, 3809.523809523809, true],
-            cymbal: [5000, 3809.52380952381, true],
-            HHclosed: [10000, 3809.52380952381, true],
-            HHopen: [15000, 3809.52380952381, true],
-            kick: [20000, 3809.52380952381, true],
-            rimshot: [25000, 3809.52380952381, true],
-            snare: [30000, 3809.52380952381, true],
-            tom: [35000, 3809.52380952381, true],
+            clap: [0, 3840, true],
+            cowbell: [5000, 3840, true],
+            cymbal: [10000, 3840, true],
+            HHclosed: [15000, 3840, true],
+            HHopen: [20000, 3840, true],
+            kick: [25000, 3840, true],
+            rimshot: [30000, 3840.0000000000036, true],
+            snare: [35000, 3840.0000000000036, true],
+            tom: [40000, 3840.0000000000036, true],
           },
           mute: true,
         });
 
         let trackMutes = [];
+        // play returns a number with the id for the track
+        // we'll use that to keep tabs on which tracks are muted
         const clap = sound.play("clap");
         trackMutes[clap] = true;
+        const cowbell = sound.play("cowbell");
+        trackMutes[cowbell] = true;
         const cymbal = sound.play("cymbal");
         trackMutes[cymbal] = true;
         const HHclosed = sound.play("HHclosed");
@@ -45,13 +76,28 @@
         const tom = sound.play("tom");
         trackMutes[tom] = true;
 
-        function toggleMute(id) {
+        const media = document.querySelector("video");
+
+        function toggleMute(id, mute) {
+          // toggle the array that tracks the mute state of each track
           trackMutes[id] = !trackMutes[id];
-          sound.mute(trackMutes[id], id);
+          let muted = trackMutes[id];
+          // if we passed a mute value, use that instead
+          if (mute !== undefined) {
+            // we want the inverse because if the flag is false, the sound should be muted
+            muted = !mute;
+          }
+          sound.mute(muted, id);
         }
 
-        function playClap() {
-          sound.mute(false);
+        function toggleVideo(play) {
+          // if the media is paused but a sound is on, play the media
+          if (play && media.paused) {
+            media.play();
+            // if no sound is on and the media is not paused, pause the media
+          } else if (!play && !media.paused) {
+            media.pause();
+          }
         }
 
         const playKickBtn = document.querySelector("#kick");
@@ -85,6 +131,47 @@
         const playCymbalBtn = document.querySelector("#cymbal");
         playCymbalBtn.addEventListener("click", () => toggleMute(cymbal));
         playCymbalBtn.disabled = false;
+
+        const playCowbellBtn = document.querySelector("#cowbell");
+        playCowbellBtn.addEventListener("click", () => toggleMute(cowbell));
+        playCowbellBtn.disabled = false;
+
+        // we'll just use an anonymous key for this as we won't be doing targeting
+        const context = {
+          kind: "user",
+          key: "anonymous",
+        };
+        const client = LDClient.initialize("641dcacb3b6ee112c6c81830", context);
+
+        // get each flag value and intialize the sound based on the value
+        // add a listener for any flag changes
+        function initFlag(key, instrument) {
+          const flag = client.variation(key, false);
+          toggleMute(instrument, flag);
+
+          client.on("change:" + key, (value) => {
+            toggleMute(instrument, value);
+            // toggle the video
+            let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
+            toggleVideo(sum);
+          });
+        }
+        client.on("ready", () => {
+          initFlag("cowbell", cowbell);
+          initFlag("cymbal", cymbal);
+          initFlag("tom", tom);
+          initFlag("clap", clap);
+          initFlag("rimshot", rimshot);
+          initFlag("HHopen", HHopen);
+          initFlag("HHclosed", HHclosed);
+          initFlag("snare", snare);
+          initFlag("kick", kick);
+
+          // toggle the video
+          // toggle the video
+          let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
+          toggleVideo(sum);
+        });
       })();
     </script>
   </body>

@@ -17,6 +17,15 @@
         left: 0;
         width: 100%;
       }
+      .start-overlay {
+        background-color: black;
+        text-align: center;
+        position: absolute;
+        top: 0%;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
       button {
         margin: 0.2em;
         color: white;
@@ -31,6 +40,14 @@
       .button-on {
         background-color: #ebff38;
         color: #405bff;
+      }
+      .start-button {
+        height: 250px;
+        width: 250px;
+        margin-top: 20%;
+      }
+      .hidden {
+        display: none;
       }
     </style>
   </head>
@@ -48,11 +65,21 @@
         <button id="cymbal" disabled>Cymbal</button>
         <button id="cowbell" disabled>Cowbell</button>
       </div>
+      <div id="start-overlay" class="start-overlay">
+        <button id="start-button" class="start-button">Click to start</button>
+      </div>
     </div>
     <script src="ldclient.min.js"></script>
     <script src="howler.core.min.js"></script>
     <script>
       (function () {
+        // the start button was added because web audio won't play unless you first interact with the app
+        document
+          .getElementById("start-button")
+          .addEventListener("click", () => {
+            document.getElementById("start-overlay").classList.add("hidden");
+          });
+
         const sound = new Howl({
           src: ["drums.webm", "drums.mp3"],
           sprite: {
@@ -118,7 +145,6 @@
         }
 
         function toggleVideo(play) {
-          console.log("play: " + play);
           // if the media is paused but a sound is on, play the media
           if (play && media.paused) {
             media.play();

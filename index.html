@@ -171,9 +171,7 @@
           await initFlag("snare", snare);
           await initFlag("kick", kick);
 
-          console.log(trackMutes);
-
-          // toggle the video
+          // play the video if any tracks are on
           let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
           toggleVideo(sum);
         });

@@ -11,11 +11,26 @@
         object-fit: cover;
       }
       .overlay {
+        text-align: center;
         position: absolute;
-        top: 0;
+        bottom: 0;
         left: 0;
         width: 100%;
-        height: 100%;
+      }
+      button {
+        margin: 0.2em;
+        color: white;
+        background-color: #405bff;
+        /* background-repeat: no-repeat;
+        background-size: 50%;
+        background-position: center; */
+        height: 100px;
+        width: 100px;
+        vertical-align: top;
+      }
+      .button-on {
+        background-color: #ebff38;
+        color: #405bff;
       }
     </style>
   </head>
@@ -55,42 +70,55 @@
         });
 
         let trackMutes = [];
+        let trackBtns = [];
         // play returns a number with the id for the track
         // we'll use that to keep tabs on which tracks are muted
+        // also track buttons so that we can enable/disable
         const clap = sound.play("clap");
-        trackMutes[clap] = true;
+        trackMutes[clap] = false;
+        trackBtns[clap] = document.getElementById("clap");
         const cowbell = sound.play("cowbell");
-        trackMutes[cowbell] = true;
+        trackMutes[cowbell] = false;
+        trackBtns[cowbell] = document.getElementById("cowbell");
         const cymbal = sound.play("cymbal");
-        trackMutes[cymbal] = true;
+        trackMutes[cymbal] = false;
+        trackBtns[cymbal] = document.getElementById("cymbal");
         const HHclosed = sound.play("HHclosed");
-        trackMutes[HHclosed] = true;
+        trackMutes[HHclosed] = false;
+        trackBtns[HHclosed] = document.getElementById("HHclosed");
         const HHopen = sound.play("HHopen");
-        trackMutes[HHopen] = true;
+        trackMutes[HHopen] = false;
+        trackBtns[HHopen] = document.getElementById("HHopen");
         const kick = sound.play("kick");
-        trackMutes[kick] = true;
+        trackMutes[kick] = false;
+        trackBtns[kick] = document.getElementById("kick");
         const rimshot = sound.play("rimshot");
-        trackMutes[rimshot] = true;
+        trackMutes[rimshot] = false;
+        trackBtns[rimshot] = document.getElementById("rimshot");
         const snare = sound.play("snare");
-        trackMutes[snare] = true;
+        trackMutes[snare] = false;
+        trackBtns[snare] = document.getElementById("snare");
         const tom = sound.play("tom");
-        trackMutes[tom] = true;
+        trackMutes[tom] = false;
+        trackBtns[tom] = document.getElementById("tom");
 
         const media = document.querySelector("video");
 
-        function toggleMute(id, mute) {
-          // toggle the array that tracks the mute state of each track
-          trackMutes[id] = !trackMutes[id];
-          let muted = trackMutes[id];
-          // if we passed a mute value, use that instead
-          if (mute !== undefined) {
-            // we want the inverse because if the flag is false, the sound should be muted
-            muted = !mute;
+        function toggleMute(id, turnTrackOn) {
+          // we want the inverse because if the flag is false, the sound should be muted
+          trackMutes[id] = turnTrackOn;
+          sound.mute(!trackMutes[id], id);
+
+          // if the sound is off, turn off the button too and vice-versa
+          if (turnTrackOn) {
+            turnButtonOn(id);
+          } else {
+            turnButtonOff(id);
           }
-          sound.mute(muted, id);
         }
 
         function toggleVideo(play) {
+          console.log("play: " + play);
           // if the media is paused but a sound is on, play the media
           if (play && media.paused) {
             media.play();
@@ -100,41 +128,17 @@
           }
         }
 
-        const playKickBtn = document.querySelector("#kick");
-        playKickBtn.addEventListener("click", () => toggleMute(kick));
-        playKickBtn.disabled = false;
+        function turnButtonOn(id) {
+          const btn = trackBtns[id];
+          if (!btn.classList.contains("button-on"))
+            btn.classList.add("button-on");
+        }
 
-        const playSnareBtn = document.querySelector("#snare");
-        playSnareBtn.addEventListener("click", () => toggleMute(snare));
-        playSnareBtn.disabled = false;
-
-        const playHHclosedBtn = document.querySelector("#HHclosed");
-        playHHclosedBtn.addEventListener("click", () => toggleMute(HHclosed));
-        playHHclosedBtn.disabled = false;
-
-        const playHHopenBtn = document.querySelector("#HHopen");
-        playHHopenBtn.addEventListener("click", () => toggleMute(HHopen));
-        playHHopenBtn.disabled = false;
-
-        const playRimshotBtn = document.querySelector("#rimshot");
-        playRimshotBtn.addEventListener("click", () => toggleMute(rimshot));
-        playRimshotBtn.disabled = false;
-
-        const playClapBtn = document.querySelector("#clap");
-        playClapBtn.addEventListener("click", () => toggleMute(clap));
-        playClapBtn.disabled = false;
-
-        const playTomBtn = document.querySelector("#tom");
-        playTomBtn.addEventListener("click", () => toggleMute(tom));
-        playTomBtn.disabled = false;
-
-        const playCymbalBtn = document.querySelector("#cymbal");
-        playCymbalBtn.addEventListener("click", () => toggleMute(cymbal));
-        playCymbalBtn.disabled = false;
-
-        const playCowbellBtn = document.querySelector("#cowbell");
-        playCowbellBtn.addEventListener("click", () => toggleMute(cowbell));
-        playCowbellBtn.disabled = false;
+        function turnButtonOff(id) {
+          const btn = trackBtns[id];
+          if (btn.classList.contains("button-on"))
+            btn.classList.remove("button-on");
+        }
 
         // we'll just use an anonymous key for this as we won't be doing targeting
         const context = {
@@ -145,8 +149,8 @@
 
         // get each flag value and intialize the sound based on the value
         // add a listener for any flag changes
-        function initFlag(key, instrument) {
-          const flag = client.variation(key, false);
+        async function initFlag(key, instrument) {
+          const flag = await client.variation(key, false);
           toggleMute(instrument, flag);
 
           client.on("change:" + key, (value) => {
@@ -156,18 +160,19 @@
             toggleVideo(sum);
           });
         }
-        client.on("ready", () => {
-          initFlag("cowbell", cowbell);
-          initFlag("cymbal", cymbal);
-          initFlag("tom", tom);
-          initFlag("clap", clap);
-          initFlag("rimshot", rimshot);
-          initFlag("HHopen", HHopen);
-          initFlag("HHclosed", HHclosed);
-          initFlag("snare", snare);
-          initFlag("kick", kick);
+        client.on("ready", async () => {
+          await initFlag("cowbell", cowbell);
+          await initFlag("cymbal", cymbal);
+          await initFlag("tom", tom);
+          await initFlag("clap", clap);
+          await initFlag("rimshot", rimshot);
+          await initFlag("HHopen", HHopen);
+          await initFlag("HHclosed", HHclosed);
+          await initFlag("snare", snare);
+          await initFlag("kick", kick);
 
-          // toggle the video
+          console.log(trackMutes);
+
           // toggle the video
           let sum = trackMutes.reduce((pv, cv) => pv + cv, 0);
           toggleVideo(sum);
